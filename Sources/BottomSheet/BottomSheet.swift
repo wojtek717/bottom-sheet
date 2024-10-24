@@ -51,8 +51,10 @@ private struct ExampleView: View {
         Text("Hello World!")
             .bottomSheet(isPresented: .constant(true), detents: [.small, .medium, .large]) {
                 Text("Bottom Sheet")
+                    .padding(20)
             }
             .sheetColor(.blue)
+            .dragIndicatorPresentation(isVisible: true)
     }
 }
 

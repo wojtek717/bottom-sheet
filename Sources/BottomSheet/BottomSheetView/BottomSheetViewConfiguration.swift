@@ -9,8 +9,18 @@ import SwiftUI
 
 class BottomSheetViewConfiguration {
     var sheetColor: Color
+    var dragIndicator: DragIndicator
     
-    init(sheetColor: Color = .white) {
+    init(sheetColor: Color = .white,
+         dragIndicator: DragIndicator = .init()) {
         self.sheetColor = sheetColor
+        self.dragIndicator = dragIndicator
+    }
+}
+
+extension BottomSheetViewConfiguration {
+    struct DragIndicator {
+        var isPresented: Bool = false
+        var color: Color = .gray
     }
 }
