@@ -1,6 +1,6 @@
-Installation
+# Installation
 
-Swift Package Manager
+## Swift Package Manager
 
 The preferred way of installing BottomSheet is via the Swift Package Manager.
 
