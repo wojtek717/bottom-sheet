@@ -1,3 +1,10 @@
+//
+//  Detent.swift
+//  BottomSheet
+//
+//  Created by Wojciech Konury on 23/10/2024.
+//
+
 import Foundation
 
 public enum Detent {
@@ -9,7 +16,7 @@ public enum Detent {
     var fraction: CGFloat {
         switch self {
         case .large:
-            return 0.95
+            return 1
         case .medium:
             return 0.50
         case .small:
