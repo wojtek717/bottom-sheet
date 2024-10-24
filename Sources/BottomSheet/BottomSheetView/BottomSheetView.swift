@@ -23,17 +23,14 @@ struct BottomSheetView<Content:View>: View {
         self.configuration = configuration
     }
     
-    private func isMaxDetentReached(_ screenHeight: CGFloat) -> Bool {
-        let maxFraction = detents.map(\.fraction).max() ?? 0.0
-        
-        if isNegativeScrollOffset == true {
-            return true
-        }
-        
-        if (screenHeight * maxFraction).rounded() <= sheetHeight.rounded() {
-            return false
-        } else {
-            return true
+    private var dragIndicator: some View {
+        VStack {
+            Capsule()
+                .frame(width: 50, height: 5)
+                .foregroundStyle(configuration.dragIndicator.color)
+                .padding(.top, 5)
+            
+            Spacer()
         }
     }
     
@@ -41,25 +38,30 @@ struct BottomSheetView<Content:View>: View {
         GeometryReader { geometry in
             let screenHeight = geometry.size.height
             
-            
             VStack {
                 Spacer()
                 
-                ScrollView {
-                    content()
-                }
-                .onScrollGeometryChange(for: Double.self, of: { geometry in
-                    return geometry.contentOffset.y
-                }, action: { oldValue, newValue in
-                    print(newValue)
-                    
-                    if newValue < 0.0 {
-                        sheetHeight = sheetHeight + newValue
+                ZStack {
+                    ScrollView {
+                        content()
                     }
+                    .scrollDisabled(isMaxDetentReached(screenHeight))
+                    .onScrollGeometryChange(for: Double.self, of: { geometry in
+                        return geometry.contentOffset.y
+                    }, action: { oldValue, newValue in
+                        print(newValue)
+                        
+                        if newValue < 0.0 {
+                            sheetHeight = sheetHeight + newValue
+                        }
+                        
+                        isNegativeScrollOffset = newValue < 0.0
+                    })
                     
-                    isNegativeScrollOffset = newValue < 0.0
-                })
-                .scrollDisabled(isMaxDetentReached(screenHeight))
+                    if configuration.dragIndicator.isPresented {
+                        dragIndicator
+                    }
+                }
                 .frame(maxWidth: .infinity)
                 .frame(height: sheetHeight)
                 .background(configuration.sheetColor)
@@ -89,6 +91,22 @@ struct BottomSheetView<Content:View>: View {
             .onAppear {
                 sheetHeight = (detents.map(\.fraction).min() ?? 1.0) * screenHeight
             }
+        }
+    }
+}
+
+private extension BottomSheetView {
+    func isMaxDetentReached(_ screenHeight: CGFloat) -> Bool {
+        let maxFraction = detents.map(\.fraction).max() ?? 0.0
+        
+        if isNegativeScrollOffset == true {
+            return true
+        }
+        
+        if (screenHeight * maxFraction).rounded() <= sheetHeight.rounded() {
+            return false
+        } else {
+            return true
         }
     }
 }

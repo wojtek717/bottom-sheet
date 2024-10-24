@@ -261,7 +261,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "TabBarWithSheet/Preview\\ Content TabBarWithSheet/ContentView.swift TabBarWithSheet/TabBarWithSheetApp.swift";
-				DEVELOPMENT_TEAM = U5Q4R3JPYD;
+				DEVELOPMENT_TEAM = 6Y9M9TVKNC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -290,7 +290,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "TabBarWithSheet/Preview\\ Content TabBarWithSheet/ContentView.swift TabBarWithSheet/TabBarWithSheetApp.swift";
-				DEVELOPMENT_TEAM = U5Q4R3JPYD;
+				DEVELOPMENT_TEAM = 6Y9M9TVKNC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
