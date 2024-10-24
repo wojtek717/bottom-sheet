@@ -11,15 +11,13 @@ public struct BottomSheet<SheetContent:View, V: View>: View {
     @Binding private var isPresented: Bool
     @ViewBuilder private let sheetContent: () -> SheetContent
     
-    private let detents: [Detent]
     private let view: V
     
     internal var configuration: BottomSheetViewConfiguration = .init()
     
-    public init(isPresented: Binding<Bool>, sheetContent: @escaping () -> SheetContent, detents: [Detent], view: V) {
+    public init(isPresented: Binding<Bool>, sheetContent: @escaping () -> SheetContent, view: V) {
         self._isPresented = isPresented
         self.sheetContent = sheetContent
-        self.detents = detents
         self.view = view
     }
     
@@ -28,7 +26,7 @@ public struct BottomSheet<SheetContent:View, V: View>: View {
             view
             
             if isPresented {
-                BottomSheetView(detents: detents, configuration: configuration, content: sheetContent)
+                BottomSheetView(configuration: configuration, content: sheetContent)
                     .edgesIgnoringSafeArea(.bottom)
             }
         }
@@ -38,23 +36,25 @@ public struct BottomSheet<SheetContent:View, V: View>: View {
 public extension View {
     func bottomSheet<SheetContent:View>(
         isPresented: Binding<Bool>,
-        detents: [Detent] = [.large],
         sheetContent: @escaping ()
         -> SheetContent) -> BottomSheet<SheetContent, Self> {
             
-            BottomSheet(isPresented: isPresented, sheetContent: sheetContent, detents: detents, view: self)
+            BottomSheet(isPresented: isPresented, sheetContent: sheetContent, view: self)
         }
 }
 
 private struct ExampleView: View {
     var body: some View {
         Text("Hello World!")
-            .bottomSheet(isPresented: .constant(true), detents: [.small, .medium, .large]) {
-                Text("Bottom Sheet")
-                    .padding(20)
+            .bottomSheet(isPresented: .constant(true)) {
+                ScrollView {
+                    Text("Bottom Sheet")
+                        .padding(20)
+                }
             }
             .sheetColor(.blue)
             .dragIndicatorPresentation(isVisible: true)
+            .detentsPresentation(detents: [.small, .medium, .large])
     }
 }
 
