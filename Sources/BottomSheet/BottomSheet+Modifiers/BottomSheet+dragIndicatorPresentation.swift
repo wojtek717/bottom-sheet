@@ -12,4 +12,4 @@ public extension BottomSheet {
         self.configuration.dragIndicator = .init(isPresented: isVisible, color: color)
         return self
     }
-}
+ }

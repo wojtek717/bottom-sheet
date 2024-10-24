@@ -9,17 +9,13 @@ import SwiftUI
 
 struct BottomSheetView<Content:View>: View {
     @State private var sheetHeight: CGFloat = 0.0
-    @State private var offset = CGSize.zero
     @State private var isNegativeScrollOffset = false
-    
     @ViewBuilder private let content: () -> Content
-    private var detents: [Detent] = [.large]
     
     internal var configuration: BottomSheetViewConfiguration
     
-    init(detents: [Detent] = [.large], configuration: BottomSheetViewConfiguration, content: @escaping () -> Content) {
+    init(configuration: BottomSheetViewConfiguration, content: @escaping () -> Content) {
         self.content = content
-        self.detents = detents
         self.configuration = configuration
     }
     
@@ -42,21 +38,20 @@ struct BottomSheetView<Content:View>: View {
                 Spacer()
                 
                 ZStack {
-                    ScrollView {
-                        content()
-                    }
-                    .scrollDisabled(isMaxDetentReached(screenHeight))
-                    .onScrollGeometryChange(for: Double.self, of: { geometry in
-                        return geometry.contentOffset.y
-                    }, action: { oldValue, newValue in
-                        print(newValue)
-                        
-                        if newValue < 0.0 {
-                            sheetHeight = sheetHeight + newValue
-                        }
-                        
-                        isNegativeScrollOffset = newValue < 0.0
-                    })
+                    content()
+                    // Describe scroll behaviour if content is wrapped with ScrollView
+                        .scrollDisabled(isMaxDetentReached(screenHeight))
+                        .onScrollGeometryChange(for: Double.self, of: { geometry in
+                            return geometry.contentOffset.y
+                        }, action: { oldValue, newValue in
+                            print(newValue)
+                            
+                            if newValue < 0.0 {
+                                sheetHeight = sheetHeight + newValue
+                            }
+                            
+                            isNegativeScrollOffset = newValue < 0.0
+                        })
                     
                     if configuration.dragIndicator.isPresented {
                         dragIndicator
@@ -71,25 +66,15 @@ struct BottomSheetView<Content:View>: View {
                 .gesture(
                     DragGesture()
                         .onChanged { gesture in
-                            offset = gesture.translation
-                            
-                            
-                            let newSheetHeight = sheetHeight - offset.height.rounded()
-                            
-                            if newSheetHeight > (detents.map(\.fraction).max() ?? 0.0) * screenHeight{
-                                return
-                            }
-                            
-                            sheetHeight = newSheetHeight
+                            dragGestureOnChanged(gesture, screenHeight: screenHeight)
                         }
                         .onEnded({ gesture in
-                            let detent = Detent.forValue(sheetHeight / screenHeight, from: detents)
-                            sheetHeight = screenHeight * detent.fraction
+                            dragGestureOnEnded(gesture, screenHeight: screenHeight)
                         })
                 )
             }
             .onAppear {
-                sheetHeight = (detents.map(\.fraction).min() ?? 1.0) * screenHeight
+                onAppear(screenHeight: screenHeight)
             }
         }
     }
@@ -97,7 +82,7 @@ struct BottomSheetView<Content:View>: View {
 
 private extension BottomSheetView {
     func isMaxDetentReached(_ screenHeight: CGFloat) -> Bool {
-        let maxFraction = detents.map(\.fraction).max() ?? 0.0
+        let maxFraction = configuration.detents.map(\.fraction).max() ?? 0.0
         
         if isNegativeScrollOffset == true {
             return true
@@ -108,5 +93,25 @@ private extension BottomSheetView {
         } else {
             return true
         }
+    }
+    
+    func dragGestureOnChanged(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
+        let offset = gesture.translation
+        let newSheetHeight = sheetHeight - offset.height.rounded()
+        
+        if newSheetHeight > (configuration.detents.map(\.fraction).max() ?? 0.0) * screenHeight {
+            return
+        }
+        
+        sheetHeight = newSheetHeight
+    }
+    
+    func dragGestureOnEnded(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
+        let detent = Detent.forValue(sheetHeight / screenHeight, from: configuration.detents)
+        sheetHeight = screenHeight * detent.fraction
+    }
+    
+    func onAppear(screenHeight: CGFloat) {
+        sheetHeight = (configuration.detents.map(\.fraction).min() ?? 1.0) * screenHeight
     }
 }
