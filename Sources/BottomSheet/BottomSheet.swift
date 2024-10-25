@@ -14,6 +14,7 @@ public struct BottomSheet<SheetContent:View, V: View>: View {
     private let view: V
     
     internal var configuration: BottomSheetViewConfiguration = .init()
+    var edges: Edge.Set?
     
     public init(isPresented: Binding<Bool>, sheetContent: @escaping () -> SheetContent, view: V) {
         self._isPresented = isPresented
@@ -27,7 +28,7 @@ public struct BottomSheet<SheetContent:View, V: View>: View {
             
             if isPresented {
                 BottomSheetView(configuration: configuration, content: sheetContent)
-                    .edgesIgnoringSafeArea(.bottom)
+                    .ignoresSafeAreaEdges(configuration.ignoredEdges)
             }
         }
     }

@@ -60,7 +60,14 @@ struct BottomSheetView<Content:View>: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: sheetHeight)
                 .background(configuration.sheetColor)
-                .cornerRadius(20)
+                .clipShape(
+                    .rect(
+                        topLeadingRadius: 20,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 20
+                    )
+                )
                 .shadow(radius: 10)
                 .animation(.easeInOut, value: sheetHeight)
                 .gesture(

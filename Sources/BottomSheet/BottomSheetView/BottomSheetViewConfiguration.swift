@@ -11,13 +11,16 @@ class BottomSheetViewConfiguration {
     var sheetColor: Color
     var dragIndicator: DragIndicator
     var detents: [Detent]
+    var ignoredEdges: Edge.Set?
     
     init(sheetColor: Color = .white,
          dragIndicator: DragIndicator = .init(),
-         detents: [Detent] = [.large]) {
+         detents: [Detent] = [.large],
+         ignoredEdges: Edge.Set? = .bottom) {
         self.sheetColor = sheetColor
         self.dragIndicator = dragIndicator
         self.detents = detents
+        self.ignoredEdges = ignoredEdges
     }
 }
 
