@@ -1,5 +1,6 @@
 import SwiftUI
 import BottomSheet
+import MapKit
 
 struct ContentView: View {
     var body: some View {
@@ -22,53 +23,96 @@ struct ContentView: View {
 }
 
 struct HomeView: View {
-    @State private var showCustomSheet = false
-    @State private var text = "1"
+    @State private var showCustomSheet = true
     
     var body: some View {
         ZStack {
-            VStack {
-                Spacer()
-                
-                Text(text)
-                Button("Add to text") {
-                    text.append("2")
+            Map { }
+            .bottomSheet(isPresented: $showCustomSheet) {
+                List {
+                    Section("Favorites") {
+                        HStack(spacing: 20) {
+                            FavoriteView(action: {}, image: Image(systemName: "house.fill"), title: "Home")
+                            FavoriteView(action: {}, image: Image(systemName: "briefcase.fill"), title: "Work")
+                            FavoriteView(action: {}, image: Image(systemName: "fuelpump.fill"), title: "Gas")
+                            FavoriteView(action: {}, image: Image(systemName: "plus"), title: "Add")
+                        }
+                    }
                     
-                    if text.count > 10 {
-                        text = "1"
+                    Section("Recents") {
+                        RecentView(
+                            title: "Market Square",
+                            subtitle: "Rynek, 11-400 Wrocław",
+                            image: Image(systemName: "arrow.turn.up.right"))
+                        
+                        RecentView(
+                            title: "Wrocław University of Science and Technology",
+                            subtitle: "Wybrzeże Stanisława Wyspiańskiego 27, 50-370 Wrocław",
+                            image: Image(systemName: "mappin"))
+                        
+                        RecentView(
+                            title: "Sky Tower",
+                            subtitle: "Powstańców Śląskich 95, 53-332 Wrocław",
+                            image: Image(systemName: "arrow.turn.up.left"))
                     }
                 }
-                
-                Text("Hello view!")
-                    .font(.title)
-                Text("👋")
-                    .font(.title)
-                
-                Spacer()
             }
-            .bottomSheet(isPresented: $showCustomSheet, detents: [.small, .medium]) {
-                VStack {
-                    Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eget egestas augue, a varius odio. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed mattis dolor sed turpis luctus auctor. Nulla fermentum justo congue, efficitur dolor eu, bibendum nisi. Quisque feugiat convallis pharetra. Cras ornare arcu suscipit consequat sodales. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nulla scelerisque augue in condimentum efficitur. Aenean egestas gravida leo, nec mattis elit malesuada eu. Quisque et odio hendrerit, congue tortor at, cursus diam.")
-                }
-                .font(.title)
-            }
-            .edgesIgnoringSafeArea(.bottom)
+            .detentsPresentation(detents: [.small, .medium, .large])
+            .ignoresSafeAreaEdgesPresentation(nil)
+            .dragIndicatorPresentation(isVisible: true)
         }
-        .overlay(
-            Button(action: {
-                showCustomSheet.toggle()
-            }) {
-                Text(showCustomSheet ? "Hide Sheet" : "Show Sheet")
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            },
-            alignment: .top
-        )
     }
 }
 
 #Preview(body: {
     ContentView()
 })
+
+struct FavoriteView: View {
+    let action: () -> ()
+    let image: Image
+    let title: String
+    
+    var body: some View {
+        Button(action: action) {
+            VStack {
+                Circle()
+                    .frame(width: 40, height: 40)
+                    .foregroundStyle(Color.lightGray)
+                    .overlay {
+                        image
+                    }
+                
+                Text(title)
+                    .font(.footnote)
+                    .foregroundStyle(Color.black)
+            }
+        }
+        .buttonStyle(BorderlessButtonStyle())
+    }
+}
+
+struct RecentView: View {
+    let title: String
+    let subtitle: String
+    let image: Image
+    
+    var body: some View {
+        HStack {
+            Circle()
+                .frame(width: 30, height: 30)
+                .foregroundStyle(Color.lightGray)
+                .overlay {
+                    image
+                }
+            
+            VStack(alignment: .leading) {
+                Text(title)
+                    .font(.title3)
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(Color.gray)
+            }
+        }
+    }
+}
