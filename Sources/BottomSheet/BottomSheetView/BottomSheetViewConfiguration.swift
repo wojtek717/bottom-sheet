@@ -15,14 +15,14 @@ class BottomSheetViewConfiguration {
     var detents: [Detent]
     var cornerRadius: CGFloat
     /// Edges that ignore the safe area
-    var ignoredEdges: Edge.Set?
+    var ignoredEdges: Edge.Set
     
     init(
         sheetColor: Color? = nil,
         dragIndicator: DragIndicator = .init(),
         detents: [Detent] = [.large],
         cornerRadius: CGFloat = 20,
-        ignoredEdges: Edge.Set? = .bottom
+        ignoredEdges: Edge.Set = []
     ) {
         self.sheetColor = sheetColor
         self.dragIndicator = dragIndicator

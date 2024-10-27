@@ -85,7 +85,7 @@ struct BottomSheetView<Content: View>: View {
             .onAppear {
                 sheetHeight = configuration.selectedDetent.fraction * screenHeight
             }
-        }
+        }.ignoresSafeArea(edges: configuration.ignoredEdges)
     }
 }
 
