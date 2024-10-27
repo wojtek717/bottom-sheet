@@ -14,7 +14,10 @@ struct BottomSheetView<Content: View>: View {
     @Binding private var configuration: BottomSheetViewConfiguration
 
     private let content: Content
-    
+
+    /// Adjust this value to change the smoothing factor for on change drag gesture
+    private let smoothingFactor: CGFloat = 0.2
+
     init(configuration: Binding<BottomSheetViewConfiguration>, content: Content) {
         self._configuration = configuration
         self.content = content
@@ -108,17 +111,18 @@ extension BottomSheetView {
     }
     
     func dragGestureOnChanged(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
-        let offset = gesture.translation
-        let desiredHeight = sheetHeight - offset.height.rounded()
+        let desiredHeight = sheetHeight - gesture.translation.height
+
+        guard desiredHeight != sheetHeight else { return }
+
+        let minHeight = minHeight(for: screenHeight)
+        let maxHeight = maxFraction * screenHeight
+
+        // Clamp desired height within bounds
+        let clampedDesiredHeight = max(minHeight, min(desiredHeight, maxHeight))
         
-        if desiredHeight > maxFraction * screenHeight {
-            return
-        }
-        
-        sheetHeight = max(
-            minHeight(for: screenHeight),
-            desiredHeight
-        )
+        // Smooth the transition between the current height and the target
+        sheetHeight = (sheetHeight * (1 - smoothingFactor)) + (clampedDesiredHeight * smoothingFactor)
     }
     
     func dragGestureOnEnded(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
