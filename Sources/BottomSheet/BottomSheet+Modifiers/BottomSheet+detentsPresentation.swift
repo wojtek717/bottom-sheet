@@ -8,8 +8,11 @@
 import SwiftUI
 
 public extension BottomSheet {
-    func detentsPresentation(detents: [Detent]) -> BottomSheet {
-        self.configuration.detents = detents
+    func detentsPresentation(initialDetent: Detent? = nil, detents: [Detent]) -> BottomSheet {
+        configuration.detents = detents
+        if let initialDetent = initialDetent ?? detents.smallest, !configuration.setInitialDetent {
+            configuration.selectedDetent = initialDetent
+        }
         return self
     }
  }

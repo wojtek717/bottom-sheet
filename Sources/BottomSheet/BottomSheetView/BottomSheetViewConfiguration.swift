@@ -16,7 +16,10 @@ class BottomSheetViewConfiguration {
     var cornerRadius: CGFloat
     /// Edges that ignore the safe area
     var ignoredEdges: Edge.Set
-    
+
+    /// Indicates if the bottom sheet's initial `selectedDetent` state has been set
+    var setInitialDetent = false
+
     init(
         sheetColor: Color? = nil,
         dragIndicator: DragIndicator = .init(),
@@ -38,8 +41,8 @@ class BottomSheetViewConfiguration {
         }
         self.detents = detents
 
-        guard let smallestDetent = detents.min(by: { $0.fraction < $1.fraction }) else {
-            preconditionFailure("`smallestDetent` should never be nil")
+        guard let smallestDetent = detents.smallest else {
+            preconditionFailure("`smallestDetent` should never be nil, based on the prior logic")
         }
 
         self.selectedDetent = smallestDetent

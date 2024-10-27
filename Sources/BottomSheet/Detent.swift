@@ -30,3 +30,11 @@ public enum Detent {
         return detents.min(by: { abs($0.fraction - value) < abs($1.fraction - value) }) ?? .small
     }
 }
+
+extension Array where Element == Detent {
+
+    var smallest: Detent? {
+        self.min(by: { $0.fraction < $1.fraction })
+    }
+    
+}
