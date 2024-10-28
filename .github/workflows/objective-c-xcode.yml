@@ -16,4 +16,4 @@ jobs:
         uses: actions/checkout@v4
       - name: Build
         run: |
-          xcodebuild clean build analyze -scheme "BottomSheet"
+          xcodebuild clean build analyze -scheme "BottomSheet" -destination 'platform=iOS Simulator,name=iPhone 12'
