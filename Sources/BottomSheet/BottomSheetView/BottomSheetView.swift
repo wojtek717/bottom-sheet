@@ -13,13 +13,20 @@ struct BottomSheetView<Content: View>: View {
 
     @Binding private var configuration: BottomSheetViewConfiguration
 
+    @Binding private var selectedDetent: Detent
+
     private let content: Content
 
     /// Adjust this value to change the smoothing factor for on change drag gesture
     private let smoothingFactor: CGFloat = 0.2
 
-    init(configuration: Binding<BottomSheetViewConfiguration>, content: Content) {
+    init(
+        configuration: Binding<BottomSheetViewConfiguration>,
+        selectedDetent: Binding<Detent>,
+        content: Content
+    ) {
         self._configuration = configuration
+        self._selectedDetent = selectedDetent
         self.content = content
     }
     
@@ -47,7 +54,6 @@ struct BottomSheetView<Content: View>: View {
                     .onScrollGeometryChange(for: Double.self) { geometry in
                         return geometry.contentOffset.y
                     } action: { oldValue, newValue in
-                        print(newValue)
                         if newValue < 0.0 {
                             sheetHeight = max(
                                 minHeight(for: screenHeight),
@@ -62,7 +68,7 @@ struct BottomSheetView<Content: View>: View {
                             dragIndicator
                         }
                     })
-                    .frame(maxWidth: .infinity)
+                    .frame(minWidth: 0, maxWidth: .infinity)
                     .frame(height: sheetHeight)
                     .background(configuration.sheetColor)
                     .clipShape(
@@ -86,7 +92,7 @@ struct BottomSheetView<Content: View>: View {
                     )
             }
             .onAppear {
-                sheetHeight = configuration.selectedDetent.fraction * screenHeight
+                sheetHeight = selectedDetent.fraction * screenHeight
             }
         }.ignoresSafeArea(edges: configuration.ignoredEdges)
     }
@@ -137,8 +143,8 @@ extension BottomSheetView {
             return
         }
 
-        configuration.selectedDetent = selectedDetent
-        sheetHeight = desiredHeight
+        self.selectedDetent = selectedDetent
+        self.sheetHeight = desiredHeight
     }
 
     func minHeight(for screenHeight: CGFloat) -> CGFloat {

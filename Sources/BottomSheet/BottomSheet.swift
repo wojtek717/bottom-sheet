@@ -10,27 +10,29 @@ import SwiftUI
 public struct BottomSheet<Content: View, SheetContent: View>: View {
     @State var configuration = BottomSheetViewConfiguration()
 
-    private let isPresented: Bool
+    @Binding var selectedDetent: Detent
+
     private let content: Content
     private let sheetContent: SheetContent
 
     public init(
-        isPresented: Bool = true,
+        selectedDetent: Binding<Detent>,
         @ViewBuilder content: () -> Content,
         @ViewBuilder sheetContent: () -> SheetContent
     ) {
-        self.isPresented = isPresented
+        self._selectedDetent = selectedDetent
         self.content = content()
         self.sheetContent = sheetContent()
     }
     
     public var body: some View {
-        ZStack {
-            content
-            
-            if isPresented {
+        ZStack(alignment: .center) {
+            content.frame(maxWidth: .infinity)
+
+            if selectedDetent != .hidden {
                 BottomSheetView(
                     configuration: $configuration,
+                    selectedDetent: $selectedDetent,
                     content: sheetContent
                 )
             }
@@ -41,11 +43,11 @@ public struct BottomSheet<Content: View, SheetContent: View>: View {
 public extension View {
 
     func bottomSheet<SheetContent: View>(
-        isPresented: Bool = true,
+        selectedDetent: Binding<Detent>,
         @ViewBuilder sheetContent: () -> SheetContent
     ) -> BottomSheet<Self, SheetContent> {
         BottomSheet(
-            isPresented: isPresented,
+            selectedDetent: selectedDetent,
             content: { self },
             sheetContent: sheetContent
         )
@@ -54,6 +56,12 @@ public extension View {
 }
 
 private struct ExampleView: View {
+    @State var selectedDetent = Detent.small
+
+    var isPresented: Bool {
+        selectedDetent != .hidden
+    }
+
     let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
 
     @ViewBuilder
@@ -73,12 +81,24 @@ private struct ExampleView: View {
     var body: some View {
         TabView {
             Tab("Map", systemImage: "map") {
-                Text("Map")
-                    .bottomSheet {
-                        rainbowList
+                VStack {
+                    Text("isPresented: \(isPresented.description)")
+                    Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
+                        selectedDetent = if selectedDetent == .hidden {
+                            .small
+                        } else {
+                            .hidden
+                        }
                     }
-                    .dragIndicatorPresentation(isVisible: true)
-                    .detentsPresentation(detents: [.small, .medium, .large])
+                }
+                .bottomSheet(selectedDetent: $selectedDetent) {
+                    rainbowList
+                }
+                .dragIndicatorPresentation(isVisible: true)
+                // We can prevent the user from swiping to dismiss by excluding `hidden` from
+                // this list, while still supporting hiding it programmatically. Alternatively,
+                // add `.hidden` to this list to allow users to swipe to dismiss.
+                .detentsPresentation(detents: [.small, .medium, .large])
             }
 
             Tab("Settings", systemImage: "gear") {
