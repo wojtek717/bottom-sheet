@@ -10,16 +10,16 @@ import SwiftUI
 public struct BottomSheet<Content: View, SheetContent: View>: View {
     @State var configuration = BottomSheetViewConfiguration()
 
-    private let isPresented: Bool
+    @Binding private var isPresented: Bool
     private let content: Content
     private let sheetContent: SheetContent
 
     public init(
-        isPresented: Bool = true,
+        isPresented: Binding<Bool>,
         @ViewBuilder content: () -> Content,
         @ViewBuilder sheetContent: () -> SheetContent
     ) {
-        self.isPresented = isPresented
+        self._isPresented = isPresented
         self.content = content()
         self.sheetContent = sheetContent()
     }
@@ -39,9 +39,12 @@ public struct BottomSheet<Content: View, SheetContent: View>: View {
 }
 
 public extension View {
-
+    /// Presents a sheet when a binding to a Boolean value that you provide is true.
+    /// - Parameters:
+    ///   - isPresented: A binding to a Boolean value that determines whether to present the sheet that you create in the modifier’s content closure. Default - .constat(.true) so the sheet is always displayed.
+    ///   - sheetContent: A closure that returns the content of the sheet.
     func bottomSheet<SheetContent: View>(
-        isPresented: Bool = true,
+        isPresented: Binding<Bool> = .constant(true),
         @ViewBuilder sheetContent: () -> SheetContent
     ) -> BottomSheet<Self, SheetContent> {
         BottomSheet(
@@ -50,7 +53,6 @@ public extension View {
             sheetContent: sheetContent
         )
     }
-
 }
 
 private struct ExampleView: View {

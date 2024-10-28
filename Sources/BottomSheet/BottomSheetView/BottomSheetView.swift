@@ -47,7 +47,6 @@ struct BottomSheetView<Content: View>: View {
                     .onScrollGeometryChange(for: Double.self) { geometry in
                         return geometry.contentOffset.y
                     } action: { oldValue, newValue in
-                        print(newValue)
                         if newValue < 0.0 {
                             sheetHeight = max(
                                 minHeight(for: screenHeight),
@@ -93,7 +92,6 @@ struct BottomSheetView<Content: View>: View {
 }
 
 extension BottomSheetView {
-
     var maxFraction: CGFloat {
         configuration.detents.map(\.fraction).max() ?? 0.0
     }
