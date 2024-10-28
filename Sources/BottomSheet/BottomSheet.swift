@@ -10,16 +10,16 @@ import SwiftUI
 public struct BottomSheet<Content: View, SheetContent: View>: View {
     @State var configuration = BottomSheetViewConfiguration()
 
-    private let isPresented: Bool
+    @Binding private var isPresented: Bool
     private let content: Content
     private let sheetContent: SheetContent
 
     public init(
-        isPresented: Bool = true,
+        isPresented: Binding<Bool>,
         @ViewBuilder content: () -> Content,
         @ViewBuilder sheetContent: () -> SheetContent
     ) {
-        self.isPresented = isPresented
+        self._isPresented = isPresented
         self.content = content()
         self.sheetContent = sheetContent()
     }
@@ -39,9 +39,8 @@ public struct BottomSheet<Content: View, SheetContent: View>: View {
 }
 
 public extension View {
-
     func bottomSheet<SheetContent: View>(
-        isPresented: Bool = true,
+        isPresented: Binding<Bool>,
         @ViewBuilder sheetContent: () -> SheetContent
     ) -> BottomSheet<Self, SheetContent> {
         BottomSheet(
@@ -50,11 +49,21 @@ public extension View {
             sheetContent: sheetContent
         )
     }
-
+    
+    func bottomSheet<SheetContent: View>(
+        @ViewBuilder sheetContent: () -> SheetContent
+    ) -> BottomSheet<Self, SheetContent> {
+        BottomSheet(
+            isPresented: .constant(true),
+            content: { self },
+            sheetContent: sheetContent
+        )
+    }
 }
 
 private struct ExampleView: View {
     let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
+    @State private var isShowingSheet = false
 
     @ViewBuilder
     var rainbowList: some View {
