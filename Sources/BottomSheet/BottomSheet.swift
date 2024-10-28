@@ -41,10 +41,10 @@ public struct BottomSheet<Content: View, SheetContent: View>: View {
 public extension View {
     /// Presents a sheet when a binding to a Boolean value that you provide is true.
     /// - Parameters:
-    ///   - isPresented: A binding to a Boolean value that determines whether to present the sheet that you create in the modifier’s content closure.
+    ///   - isPresented: A binding to a Boolean value that determines whether to present the sheet that you create in the modifier’s content closure. Default - .constat(.true) so the sheet is always displayed.
     ///   - sheetContent: A closure that returns the content of the sheet.
     func bottomSheet<SheetContent: View>(
-        isPresented: Binding<Bool>,
+        isPresented: Binding<Bool> = .constant(true),
         @ViewBuilder sheetContent: () -> SheetContent
     ) -> BottomSheet<Self, SheetContent> {
         BottomSheet(
@@ -53,23 +53,10 @@ public extension View {
             sheetContent: sheetContent
         )
     }
-    
-    /// Presents a sheet.
-    /// - Parameter sheetContent: A closure that returns the content of the sheet.
-    func bottomSheet<SheetContent: View>(
-        @ViewBuilder sheetContent: () -> SheetContent
-    ) -> BottomSheet<Self, SheetContent> {
-        BottomSheet(
-            isPresented: .constant(true),
-            content: { self },
-            sheetContent: sheetContent
-        )
-    }
 }
 
 private struct ExampleView: View {
     let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
-    @State private var isShowingSheet = false
 
     @ViewBuilder
     var rainbowList: some View {
