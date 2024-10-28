@@ -8,7 +8,7 @@
 import SwiftUI
 
 @Observable
-class BottomSheetViewConfiguration {
+public class BottomSheetViewConfiguration {
     var sheetColor: Color?
     var dragIndicator: DragIndicator
     var detents: [Detent]
@@ -40,9 +40,11 @@ class BottomSheetViewConfiguration {
     }
 }
 
-extension BottomSheetViewConfiguration {
+public extension BottomSheetViewConfiguration {
+
     struct DragIndicator {
         var isPresented: Bool = false
         var color: Color = .gray
     }
+
 }

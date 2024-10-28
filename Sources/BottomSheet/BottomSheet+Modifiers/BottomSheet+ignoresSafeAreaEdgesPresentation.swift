@@ -7,11 +7,13 @@
 
 import SwiftUI
 
-public extension BottomSheet {    
+public extension BottomSheet {
+
     /// Expands the safe area of a view.
     /// - Parameter edges: The set of edges to expand. If nil or empty set in passed no edges are expanded.
-    func ignoresSafeAreaEdgesPresentation(_ edges: Edge.Set?) -> BottomSheet {
+    func ignoresSafeAreaEdgesPresentation(_ edges: Edge.Set?) -> some BottomSheet {
         self.configuration.ignoredEdges = edges ?? []
         return self
     }
+
 }
