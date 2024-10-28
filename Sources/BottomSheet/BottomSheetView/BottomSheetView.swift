@@ -7,16 +7,20 @@
 
 import SwiftUI
 
-struct BottomSheetView<Content:View>: View {
+struct BottomSheetView<Content: View>: View {
     @State private var sheetHeight: CGFloat = 0.0
     @State private var isNegativeScrollOffset = false
-    @ViewBuilder private let content: () -> Content
-    
-    internal var configuration: BottomSheetViewConfiguration
-    
-    init(configuration: BottomSheetViewConfiguration, content: @escaping () -> Content) {
+
+    @Binding private var configuration: BottomSheetViewConfiguration
+
+    private let content: Content
+
+    /// Adjust this value to change the smoothing factor for on change drag gesture
+    private let smoothingFactor: CGFloat = 0.2
+
+    init(configuration: Binding<BottomSheetViewConfiguration>, content: Content) {
+        self._configuration = configuration
         self.content = content
-        self.configuration = configuration
     }
     
     private var dragIndicator: some View {
@@ -37,88 +41,107 @@ struct BottomSheetView<Content:View>: View {
             VStack {
                 Spacer()
                 
-                ZStack {
-                    content()
-                    // Describe scroll behaviour if content is wrapped with ScrollView
-                        .scrollDisabled(isMaxDetentReached(screenHeight))
-                        .onScrollGeometryChange(for: Double.self, of: { geometry in
-                            return geometry.contentOffset.y
-                        }, action: { oldValue, newValue in
-                            print(newValue)
-                            
-                            if newValue < 0.0 {
-                                sheetHeight = sheetHeight + newValue
-                            }
-                            
-                            isNegativeScrollOffset = newValue < 0.0
-                        })
-                    
-                    if configuration.dragIndicator.isPresented {
-                        dragIndicator
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: sheetHeight)
-                .background(configuration.sheetColor)
-                .clipShape(
-                    .rect(
-                        topLeadingRadius: 20,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 20
-                    )
-                )
-                .shadow(radius: 10)
-                .animation(.easeInOut, value: sheetHeight)
-                .gesture(
-                    DragGesture()
-                        .onChanged { gesture in
-                            dragGestureOnChanged(gesture, screenHeight: screenHeight)
+                content
+                // Disable scroll behavior if content is wrapped with ScrollView
+                    .scrollDisabled(isMaxDetentReached(screenHeight))
+                    .onScrollGeometryChange(for: Double.self) { geometry in
+                        return geometry.contentOffset.y
+                    } action: { oldValue, newValue in
+                        print(newValue)
+                        if newValue < 0.0 {
+                            sheetHeight = max(
+                                minHeight(for: screenHeight),
+                                sheetHeight + newValue
+                            )
                         }
-                        .onEnded({ gesture in
-                            dragGestureOnEnded(gesture, screenHeight: screenHeight)
-                        })
-                )
+                        
+                        isNegativeScrollOffset = newValue < 0.0
+                    }
+                    .overlay(content: {
+                        if configuration.dragIndicator.isPresented {
+                            dragIndicator
+                        }
+                    })
+                    .frame(maxWidth: .infinity)
+                    .frame(height: sheetHeight)
+                    .background(configuration.sheetColor)
+                    .clipShape(
+                        .rect(
+                            topLeadingRadius: configuration.cornerRadius,
+                            bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0,
+                            topTrailingRadius: configuration.cornerRadius
+                        )
+                    )
+                    .shadow(radius: 10)
+                    .animation(.easeInOut, value: sheetHeight)
+                    .gesture(
+                        DragGesture()
+                            .onChanged({ gesture in
+                                dragGestureOnChanged(gesture, screenHeight: screenHeight)
+                            })
+                            .onEnded({ gesture in
+                                dragGestureOnEnded(gesture, screenHeight: screenHeight)
+                            })
+                    )
             }
             .onAppear {
-                onAppear(screenHeight: screenHeight)
+                sheetHeight = configuration.selectedDetent.fraction * screenHeight
             }
-        }
+        }.ignoresSafeArea(edges: configuration.ignoredEdges)
     }
 }
 
-private extension BottomSheetView {
+extension BottomSheetView {
+
+    var maxFraction: CGFloat {
+        configuration.detents.map(\.fraction).max() ?? 0.0
+    }
+
+    var minFraction: CGFloat {
+        configuration.detents.map(\.fraction).min() ?? 1.0
+    }
+
     func isMaxDetentReached(_ screenHeight: CGFloat) -> Bool {
-        let maxFraction = configuration.detents.map(\.fraction).max() ?? 0.0
-        
         if isNegativeScrollOffset == true {
             return true
         }
-        
-        if (screenHeight * maxFraction).rounded() <= sheetHeight.rounded() {
-            return false
-        } else {
-            return true
-        }
+
+        return (screenHeight * maxFraction).rounded() > sheetHeight.rounded()
     }
     
     func dragGestureOnChanged(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
-        let offset = gesture.translation
-        let newSheetHeight = sheetHeight - offset.height.rounded()
+        let desiredHeight = sheetHeight - gesture.translation.height
+
+        guard desiredHeight != sheetHeight else { return }
+
+        let minHeight = minHeight(for: screenHeight)
+        let maxHeight = maxFraction * screenHeight
+
+        // Clamp desired height within bounds
+        let clampedDesiredHeight = max(minHeight, min(desiredHeight, maxHeight))
         
-        if newSheetHeight > (configuration.detents.map(\.fraction).max() ?? 0.0) * screenHeight {
-            return
-        }
-        
-        sheetHeight = newSheetHeight
+        // Smooth the transition between the current height and the target
+        sheetHeight = (sheetHeight * (1 - smoothingFactor)) + (clampedDesiredHeight * smoothingFactor)
     }
     
     func dragGestureOnEnded(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
-        let detent = Detent.forValue(sheetHeight / screenHeight, from: configuration.detents)
-        sheetHeight = screenHeight * detent.fraction
+        let selectedDetent = Detent.forValue(
+            sheetHeight / screenHeight,
+            from: configuration.detents
+        )
+
+        let desiredHeight = screenHeight * selectedDetent.fraction
+
+        if desiredHeight < minHeight(for: screenHeight) {
+            return
+        }
+
+        configuration.selectedDetent = selectedDetent
+        sheetHeight = desiredHeight
     }
-    
-    func onAppear(screenHeight: CGFloat) {
-        sheetHeight = (configuration.detents.map(\.fraction).min() ?? 1.0) * screenHeight
+
+    func minHeight(for screenHeight: CGFloat) -> CGFloat {
+        minFraction * screenHeight
     }
 }

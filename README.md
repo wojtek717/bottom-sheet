@@ -34,9 +34,9 @@ Click Add Package.
 .bottomSheet(isPresented: $showCustomSheet) {
 // Sheet content goes here
 }
-  .detentsPresentation(detents: [.small, .medium, .large]) // configure sheeet detents
+  .detentsPresentation(detents: [.small, .medium, .large]) // configure sheet detents
   .ignoresSafeAreaEdgesPresentation(nil) // configure safe area edges to ignore
-  .dragIndicatorPresentation(isVisible: true) // display draag indicator
+  .dragIndicatorPresentation(isVisible: true) // display drag indicator
 ```
 
 # Modifiers

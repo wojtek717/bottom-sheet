@@ -7,55 +7,84 @@
 
 import SwiftUI
 
-public struct BottomSheet<SheetContent:View, V: View>: View {
-    @Binding private var isPresented: Bool
-    @ViewBuilder private let sheetContent: () -> SheetContent
-    
-    private let view: V
-    
-    internal var configuration: BottomSheetViewConfiguration = .init()
-    var edges: Edge.Set?
-    
-    public init(isPresented: Binding<Bool>, sheetContent: @escaping () -> SheetContent, view: V) {
-        self._isPresented = isPresented
-        self.sheetContent = sheetContent
-        self.view = view
+public struct BottomSheet<Content: View, SheetContent: View>: View {
+    @State var configuration = BottomSheetViewConfiguration()
+
+    private let isPresented: Bool
+    private let content: Content
+    private let sheetContent: SheetContent
+
+    public init(
+        isPresented: Bool = true,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder sheetContent: () -> SheetContent
+    ) {
+        self.isPresented = isPresented
+        self.content = content()
+        self.sheetContent = sheetContent()
     }
     
     public var body: some View {
         ZStack {
-            view
+            content
             
             if isPresented {
-                BottomSheetView(configuration: configuration, content: sheetContent)
-                    .ignoresSafeAreaEdges(configuration.ignoredEdges)
+                BottomSheetView(
+                    configuration: $configuration,
+                    content: sheetContent
+                )
             }
         }
     }
 }
 
 public extension View {
-    func bottomSheet<SheetContent:View>(
-        isPresented: Binding<Bool>,
-        sheetContent: @escaping ()
-        -> SheetContent) -> BottomSheet<SheetContent, Self> {
-            
-            BottomSheet(isPresented: isPresented, sheetContent: sheetContent, view: self)
-        }
+
+    func bottomSheet<SheetContent: View>(
+        isPresented: Bool = true,
+        @ViewBuilder sheetContent: () -> SheetContent
+    ) -> BottomSheet<Self, SheetContent> {
+        BottomSheet(
+            isPresented: isPresented,
+            content: { self },
+            sheetContent: sheetContent
+        )
+    }
+
 }
 
 private struct ExampleView: View {
-    var body: some View {
-        Text("Hello World!")
-            .bottomSheet(isPresented: .constant(true)) {
-                ScrollView {
-                    Text("Bottom Sheet")
-                        .padding(20)
-                }
+    let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
+
+    @ViewBuilder
+    var rainbowList: some View {
+        List {
+            ForEach((0..<colors.count * 4), id: \.self) { index in
+                let color = colors[index % colors.count]
+                Text(color.description)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .listRowBackground(color)
             }
-            .sheetColor(.blue)
-            .dragIndicatorPresentation(isVisible: true)
-            .detentsPresentation(detents: [.small, .medium, .large])
+        }
+        .listStyle(.plain)
+    }
+
+    var body: some View {
+        TabView {
+            Tab("Map", systemImage: "map") {
+                Text("Map")
+                    .bottomSheet {
+                        rainbowList
+                    }
+                    .dragIndicatorPresentation(isVisible: true)
+                    .detentsPresentation(detents: [.small, .medium, .large])
+            }
+
+            Tab("Settings", systemImage: "gear") {
+                Text("Settings")
+            }
+        }
     }
 }
 
