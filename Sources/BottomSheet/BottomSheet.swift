@@ -10,27 +10,29 @@ import SwiftUI
 public struct BottomSheet<Content: View, SheetContent: View>: View {
     @State var configuration = BottomSheetViewConfiguration()
 
-    @Binding private var isPresented: Bool
+    @Binding var selectedDetent: Detent
+
     private let content: Content
     private let sheetContent: SheetContent
 
     public init(
-        isPresented: Binding<Bool>,
+        selectedDetent: Binding<Detent>,
         @ViewBuilder content: () -> Content,
         @ViewBuilder sheetContent: () -> SheetContent
     ) {
-        self._isPresented = isPresented
+        self._selectedDetent = selectedDetent
         self.content = content()
         self.sheetContent = sheetContent()
     }
     
     public var body: some View {
-        ZStack {
-            content
-            
-            if isPresented {
+        ZStack(alignment: .center) {
+            content.frame(maxWidth: .infinity)
+
+            if selectedDetent != .hidden {
                 BottomSheetView(
                     configuration: $configuration,
+                    selectedDetent: $selectedDetent,
                     content: sheetContent
                 )
             }
@@ -39,23 +41,31 @@ public struct BottomSheet<Content: View, SheetContent: View>: View {
 }
 
 public extension View {
+
     /// Presents a sheet when a binding to a Boolean value that you provide is true.
     /// - Parameters:
-    ///   - isPresented: A binding to a Boolean value that determines whether to present the sheet that you create in the modifier’s content closure. Default - .constat(.true) so the sheet is always displayed.
+    ///   - selectedDetent: A binding to a `Detent` value that determines how to present the sheet that you create in the modifier’s content closure.
     ///   - sheetContent: A closure that returns the content of the sheet.
     func bottomSheet<SheetContent: View>(
-        isPresented: Binding<Bool> = .constant(true),
+        selectedDetent: Binding<Detent>,
         @ViewBuilder sheetContent: () -> SheetContent
     ) -> BottomSheet<Self, SheetContent> {
         BottomSheet(
-            isPresented: isPresented,
+            selectedDetent: selectedDetent,
             content: { self },
             sheetContent: sheetContent
         )
     }
+
 }
 
 private struct ExampleView: View {
+    @State var selectedDetent = Detent.small
+
+    var isPresented: Bool {
+        selectedDetent != .hidden
+    }
+
     let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
 
     @ViewBuilder
@@ -75,12 +85,24 @@ private struct ExampleView: View {
     var body: some View {
         TabView {
             Tab("Map", systemImage: "map") {
-                Text("Map")
-                    .bottomSheet {
-                        rainbowList
+                VStack {
+                    Text("isPresented: \(isPresented.description)")
+                    Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
+                        selectedDetent = if selectedDetent == .hidden {
+                            .small
+                        } else {
+                            .hidden
+                        }
                     }
-                    .dragIndicatorPresentation(isVisible: true)
-                    .detentsPresentation(detents: [.small, .medium, .large])
+                }
+                .bottomSheet(selectedDetent: $selectedDetent) {
+                    rainbowList
+                }
+                .dragIndicatorPresentation(isVisible: true)
+                // We can prevent the user from swiping to dismiss by excluding `hidden` from
+                // this list, while still supporting hiding it programmatically. Alternatively,
+                // add `.hidden` to this list to allow users to swipe to dismiss.
+                .detentsPresentation(detents: [.small, .medium, .large])
             }
 
             Tab("Settings", systemImage: "gear") {
