@@ -14,17 +14,20 @@ struct IsPresentedBottomSheet<Content: View, SheetContent: View>: BottomSheet {
 
     @Binding var isPresented: Bool
 
+    private let initialDetent: Detent
     private let content: Content
     private let sheetContent: SheetContent
 
     public init(
         configuration: BottomSheetViewConfiguration = .init(),
         isPresented: Binding<Bool>,
+        initialDetent: Detent = .small,
         @ViewBuilder content: () -> Content,
         @ViewBuilder sheetContent: () -> SheetContent
     ) {
         self.configuration = configuration
         self._isPresented = isPresented
+        self.initialDetent = initialDetent
         self.content = content()
         self.sheetContent = sheetContent()
     }
@@ -36,7 +39,7 @@ struct IsPresentedBottomSheet<Content: View, SheetContent: View>: BottomSheet {
             content: { content },
             sheetContent: { sheetContent }
         ).onChange(of: isPresented) { _, newValue in
-            selectedDetent = isPresented ? .small : .hidden
+            selectedDetent = isPresented ? initialDetent : .hidden
         }
     }
     
