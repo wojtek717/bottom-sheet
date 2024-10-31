@@ -8,10 +8,12 @@
 import SwiftUI
 
 public extension BottomSheet {
+
     /// Sets the backgroud color of the sheet.
     /// - Parameter color: Color to set.
-    func sheetColor(_ color: Color) -> BottomSheet {
+    func sheetColor(_ color: Color) -> some BottomSheet {
         self.configuration.sheetColor = color
         return self
     }
+
 }

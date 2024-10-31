@@ -7,90 +7,17 @@
 
 import SwiftUI
 
-public struct BottomSheet<Content: View, SheetContent: View>: View {
-    @State var configuration = BottomSheetViewConfiguration()
-
-    @Binding private var isPresented: Bool
-    private let content: Content
-    private let sheetContent: SheetContent
-
-    public init(
-        isPresented: Binding<Bool>,
-        @ViewBuilder content: () -> Content,
-        @ViewBuilder sheetContent: () -> SheetContent
-    ) {
-        self._isPresented = isPresented
-        self.content = content()
-        self.sheetContent = sheetContent()
-    }
+/// A protocol that defines the basic structure for bottom sheet implementations.
+///
+/// Bottom sheets are UI components that slide up from the bottom of the screen and can be
+/// configured to stop at various heights (detents).
+public protocol BottomSheet: View {
+    /// The type of the main content view that appears behind the bottom sheet.
+    associatedtype Content: View
     
-    public var body: some View {
-        ZStack {
-            content
-            
-            if isPresented {
-                BottomSheetView(
-                    configuration: $configuration,
-                    content: sheetContent
-                )
-            }
-        }
-    }
+    /// The type of content that appears within the bottom sheet itself.
+    associatedtype SheetContent: View
+
+    /// Configuration options that control the bottom sheet's appearance and behavior.
+    var configuration: BottomSheetViewConfiguration { get set }
 }
-
-public extension View {
-    /// Presents a sheet when a binding to a Boolean value that you provide is true.
-    /// - Parameters:
-    ///   - isPresented: A binding to a Boolean value that determines whether to present the sheet that you create in the modifier’s content closure. Default - .constat(.true) so the sheet is always displayed.
-    ///   - sheetContent: A closure that returns the content of the sheet.
-    func bottomSheet<SheetContent: View>(
-        isPresented: Binding<Bool> = .constant(true),
-        @ViewBuilder sheetContent: () -> SheetContent
-    ) -> BottomSheet<Self, SheetContent> {
-        BottomSheet(
-            isPresented: isPresented,
-            content: { self },
-            sheetContent: sheetContent
-        )
-    }
-}
-
-private struct ExampleView: View {
-    let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .indigo, .purple]
-
-    @ViewBuilder
-    var rainbowList: some View {
-        List {
-            ForEach((0..<colors.count * 4), id: \.self) { index in
-                let color = colors[index % colors.count]
-                Text(color.description)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .listRowBackground(color)
-            }
-        }
-        .listStyle(.plain)
-    }
-
-    var body: some View {
-        TabView {
-            Tab("Map", systemImage: "map") {
-                Text("Map")
-                    .bottomSheet {
-                        rainbowList
-                    }
-                    .dragIndicatorPresentation(isVisible: true)
-                    .detentsPresentation(detents: [.small, .medium, .large])
-            }
-
-            Tab("Settings", systemImage: "gear") {
-                Text("Settings")
-            }
-        }
-    }
-}
-
-#Preview {
-    ExampleView()
-}
-

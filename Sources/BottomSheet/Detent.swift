@@ -7,10 +7,11 @@
 
 import Foundation
 
-public enum Detent {
+public enum Detent: Equatable {
     case large
     case medium
     case small
+    case hidden
     case fraction(CGFloat)
     
     var fraction: CGFloat {
@@ -21,6 +22,8 @@ public enum Detent {
             return 0.50
         case .small:
             return 0.20
+        case .hidden:
+            return 0.0
         case .fraction(let value):
             return value
         }
@@ -36,5 +39,11 @@ extension Array where Element == Detent {
     var smallest: Detent? {
         self.min(by: { $0.fraction < $1.fraction })
     }
-    
+
+    var smallestExcludingHidden: Detent? {
+        var detents = self
+        detents.removeAll { $0 == .hidden }
+        return detents.smallest
+    }
+
 }
