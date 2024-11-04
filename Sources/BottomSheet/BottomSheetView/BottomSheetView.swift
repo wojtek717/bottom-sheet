@@ -18,7 +18,7 @@ struct BottomSheetView<Content: View>: View {
     private let content: Content
 
     /// Adjust this value to change the smoothing factor for on change drag gesture
-    private let smoothingFactor: CGFloat = 0.2
+    private let smoothingFactor: CGFloat = 0.1
 
     init(
         configuration: Binding<BottomSheetViewConfiguration>,
