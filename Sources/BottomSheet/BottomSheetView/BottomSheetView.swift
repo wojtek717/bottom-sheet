@@ -9,16 +9,15 @@ import SwiftUI
 
 struct BottomSheetView<Content: View>: View {
     @State private var sheetHeight: CGFloat = 0.0
-    @State private var isNegativeScrollOffset = false
 
     @Binding private var configuration: BottomSheetViewConfiguration
-
     @Binding private var selectedDetent: Detent
 
+    /// Content to be displayed behind the sheet
     private let content: Content
 
     /// Adjust this value to change the smoothing factor for on change drag gesture
-    private let smoothingFactor: CGFloat = 0.1
+    private let smoothingFactor: CGFloat = 0.3
 
     init(
         configuration: Binding<BottomSheetViewConfiguration>,
@@ -49,8 +48,7 @@ struct BottomSheetView<Content: View>: View {
                 Spacer()
                 
                 content
-                // Disable scroll behavior if content is wrapped with ScrollView
-                    .scrollDisabled(isMaxDetentReached(screenHeight))
+                    .scrollDisabled(selectedDetent != configuration.detents.largest || sheetHeight < selectedDetent.fraction * geometry.size.height)
                     .onScrollGeometryChange(for: Double.self) { geometry in
                         return geometry.contentOffset.y
                     } action: { oldValue, newValue in
@@ -60,8 +58,6 @@ struct BottomSheetView<Content: View>: View {
                                 sheetHeight + newValue
                             )
                         }
-                        
-                        isNegativeScrollOffset = newValue < 0.0
                     }
                     .overlay(content: {
                         if configuration.dragIndicator.isPresented {
@@ -108,14 +104,6 @@ extension BottomSheetView {
         configuration.detents.map(\.fraction).min() ?? 1.0
     }
 
-    func isMaxDetentReached(_ screenHeight: CGFloat) -> Bool {
-        if isNegativeScrollOffset == true {
-            return true
-        }
-
-        return (screenHeight * maxFraction).rounded() > sheetHeight.rounded()
-    }
-    
     func dragGestureOnChanged(_ gesture: DragGesture.Value, screenHeight: CGFloat) {
         let desiredHeight = sheetHeight - gesture.translation.height
 
@@ -144,7 +132,10 @@ extension BottomSheetView {
         }
 
         self.selectedDetent = selectedDetent
-        self.sheetHeight = desiredHeight
+
+        withAnimation(.spring()) {
+            self.sheetHeight = desiredHeight
+        }
     }
 
     func minHeight(for screenHeight: CGFloat) -> CGFloat {

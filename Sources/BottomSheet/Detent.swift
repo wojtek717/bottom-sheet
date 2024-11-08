@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum Detent: Equatable {
+public enum Detent: Equatable, Comparable {
     case large
     case medium
     case small
@@ -29,6 +29,10 @@ public enum Detent: Equatable {
         }
     }
     
+    public static func <(lhs: Detent, rhs: Detent) -> Bool {
+        return lhs.fraction < rhs.fraction
+    }
+
     static func forValue(_ value: CGFloat, from detents: [Detent]) -> Detent {
         return detents.min(by: { abs($0.fraction - value) < abs($1.fraction - value) }) ?? .small
     }
@@ -36,14 +40,12 @@ public enum Detent: Equatable {
 
 extension Array where Element == Detent {
 
-    var smallest: Detent? {
-        self.min(by: { $0.fraction < $1.fraction })
+    var largest: Detent? {
+        self.max(by: { $0 < $1 })
     }
 
-    var smallestExcludingHidden: Detent? {
-        var detents = self
-        detents.removeAll { $0 == .hidden }
-        return detents.smallest
+    var smallest: Detent? {
+        self.min(by: { $0 < $1 })
     }
 
 }
