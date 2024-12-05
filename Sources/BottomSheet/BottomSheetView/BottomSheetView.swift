@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BottomSheetView<Content: View>: View {
-    @State private var contentHeight: CGFloat = 0.0
+    @State private var screenHeight: CGFloat = 0.0
     @State private var sheetHeight: CGFloat = 0.0
     @State private var enableDragGesture = true
 
@@ -77,11 +77,11 @@ struct BottomSheetView<Content: View>: View {
                     )
             }
             .onChange(of: geometry.size.height, { _, newValue in
-                contentHeight = newValue
+                screenHeight = newValue
             })
             .task {
-                contentHeight = geometry.size.height
-                sheetHeight = selectedDetent.fraction * contentHeight
+                screenHeight = geometry.size.height
+                sheetHeight = selectedDetent.fraction * screenHeight
             }
         }.ignoresSafeArea(edges: configuration.ignoredEdges)
     }
@@ -102,8 +102,8 @@ extension BottomSheetView {
 
         let desiredHeight = sheetHeight - gesture.translation.height
 
-        let minHeight = minFraction * contentHeight
-        let maxHeight = maxFraction * contentHeight
+        let minHeight = minFraction * screenHeight
+        let maxHeight = maxFraction * screenHeight
 
         // Clamp desired height within bounds
         let clampedDesiredHeight = max(minHeight, min(desiredHeight, maxHeight))
@@ -113,7 +113,7 @@ extension BottomSheetView {
     
     func dragGestureOnEnded(_ gesture: DragGesture.Value) {
         // Calculate the current fraction of the screen height
-        let currentFraction = sheetHeight / contentHeight
+        let currentFraction = sheetHeight / screenHeight
 
         // Find the closest detent based on the current fraction
         self.selectedDetent = detents.min(by: {
@@ -121,7 +121,7 @@ extension BottomSheetView {
         }) ?? .small
 
         // Calculate the desired height for the closest detent
-        let desiredHeight = contentHeight * selectedDetent.fraction
+        let desiredHeight = screenHeight * selectedDetent.fraction
 
         self.sheetHeight = desiredHeight
 
