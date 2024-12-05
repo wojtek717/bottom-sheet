@@ -82,24 +82,29 @@ private struct ExampleView: View {
     var body: some View {
         TabView {
             Tab("Map", systemImage: "map") {
-                VStack {
-                    Text("isPresented: \(isPresented.description)")
-                    Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
-                        selectedDetent = if selectedDetent == .hidden {
-                            .small
-                        } else {
-                            .hidden
+                NavigationStack {
+                    VStack {
+                        Text("isPresented: \(isPresented.description)")
+                        Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
+                            selectedDetent = if selectedDetent == .hidden {
+                                .small
+                            } else {
+                                .hidden
+                            }
                         }
                     }
+                    .navigationTitle("Map")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+                    .bottomSheet(selectedDetent: $selectedDetent) {
+                        RainbowList()
+                    }
+                    .dragIndicatorPresentation(isVisible: true)
+                    // We can prevent the user from swiping to dismiss by excluding `hidden` from
+                    // this list, while still supporting hiding it programmatically. Alternatively,
+                    // add `.hidden` to this list to allow users to swipe to dismiss.
+                    .detentsPresentation(detents: [.small, .medium, .large])
                 }
-                .bottomSheet(selectedDetent: $selectedDetent) {
-                    RainbowList()
-                }
-                .dragIndicatorPresentation(isVisible: true)
-                // We can prevent the user from swiping to dismiss by excluding `hidden` from
-                // this list, while still supporting hiding it programmatically. Alternatively,
-                // add `.hidden` to this list to allow users to swipe to dismiss.
-                .detentsPresentation(detents: [.small, .medium, .large])
             }
 
             Tab("Settings", systemImage: "gear") {
