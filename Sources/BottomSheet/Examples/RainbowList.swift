@@ -25,3 +25,12 @@ struct RainbowList: View {
     }
 
 }
+
+#Preview {
+    RainbowList()
+        .onScrollGeometryChange(for: ScrollGeometry.self) { geometry in
+            geometry
+        } action: { _, geometry in
+            print(geometry)
+        }
+}

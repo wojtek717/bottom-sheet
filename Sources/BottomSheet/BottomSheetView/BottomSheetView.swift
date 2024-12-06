@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct BottomSheetView<Content: View>: View {
-    @State private var screenHeight: CGFloat = 0.0
     @State private var sheetHeight: CGFloat = 0.0
-    @State private var enableDragGesture = true
+    @State private var scrollDisabled: Bool
+    @State private var scrollPosition = ScrollPosition()
 
     @Binding private var configuration: BottomSheetViewConfiguration
     @Binding private var selectedDetent: Detent
@@ -19,101 +19,98 @@ struct BottomSheetView<Content: View>: View {
         configuration.detents
     }
 
+    /// Height of the container of this sheet
+    private let parentHeight: CGFloat
+
     /// Content to be displayed behind the sheet
     private let content: Content
 
     init(
         configuration: Binding<BottomSheetViewConfiguration>,
         selectedDetent: Binding<Detent>,
+        parentHeight: CGFloat,
         content: Content
     ) {
         self._configuration = configuration
         self._selectedDetent = selectedDetent
+        self.parentHeight = parentHeight
         self.content = content
+        self.scrollDisabled = selectedDetent.wrappedValue != configuration.detents.wrappedValue.max()
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack {
-                Spacer(minLength: 1)
-                content
-                    .overlay(alignment: .top, content: {
-                        if configuration.dragIndicator.isPresented {
-                            Capsule()
-                                .frame(width: 50, height: 5)
-                                .foregroundStyle(configuration.dragIndicator.color)
-                                .padding(.top, 5)
-                        }
-                    })
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .frame(height: sheetHeight)
-                    .background(configuration.sheetColor)
-                    .clipShape(
-                        .rect(
-                            topLeadingRadius: configuration.cornerRadius,
-                            bottomLeadingRadius: 0,
-                            bottomTrailingRadius: 0,
-                            topTrailingRadius: configuration.cornerRadius
-                        )
-                    )
-                    .shadow(radius: 10)
-                    .animation(.spring, value: sheetHeight)
-                    // Ensures `DragGesture` works everywhere on sheet
-                    .contentShape(.rect)
-                    .scrollDisabled(enableDragGesture)
-                    .onScrollGeometryChange(for: Double.self) { geometry in
-                        geometry.contentOffset.y
-                    } action: { _, offset in
-                        enableDragGesture = offset <= 0
-                    }
-                    .simultaneousGesture(
-                        DragGesture()
-                            .onChanged({ value in
-                                dragGestureOnChanged(value)
-                            })
-                            .onEnded({ value in
-                                dragGestureOnEnded(value)
-                            })
-                    )
-            }
-            .onChange(of: geometry.size.height, { _, newValue in
-                screenHeight = newValue
+        content
+            .scrollPosition($scrollPosition)
+            .frame(height: sheetHeight)
+            .ignoresSafeArea(edges: configuration.ignoredEdges)
+            .overlay(alignment: .top, content: {
+                if configuration.dragIndicator.isPresented {
+                    Capsule()
+                        .frame(width: 50, height: 5)
+                        .foregroundStyle(configuration.dragIndicator.color)
+                        .padding(.top, 5)
+                }
             })
-            .task {
-                screenHeight = geometry.size.height
-                sheetHeight = selectedDetent.fraction * screenHeight
+            .background(configuration.sheetColor)
+            .clipShape(
+                .rect(
+                    topLeadingRadius: configuration.cornerRadius,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: configuration.cornerRadius
+                )
+            )
+            .shadow(radius: 10)
+            .animation(.spring, value: sheetHeight)
+            // Ensures `DragGesture` works everywhere on sheet
+            .contentShape(.rect)
+            .scrollDisabled(scrollDisabled && selectedDetent != detents.max())
+            // It is important to update `BottomSheetView` as infrequently as possible
+            // in `action`
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y <= 0
+            } action: { _, newValue in
+                scrollDisabled = newValue
             }
-        }.ignoresSafeArea(edges: configuration.ignoredEdges)
+            // Always be listening to `DragGesture` to ensure for seemless
+            // sheet detent changes
+            .simultaneousGesture(
+                DragGesture()
+                    .onChanged({ value in
+                        dragGestureOnChanged(value)
+                    })
+                    .onEnded({ value in
+                        dragGestureOnEnded(value)
+                    })
+            )
+            .onChange(of: parentHeight, { _, parentHeight in
+                sheetHeight = selectedDetent.fraction * parentHeight
+            })
+            .onAppear {
+                sheetHeight = selectedDetent.fraction * parentHeight
+            }
     }
 }
 
 extension BottomSheetView {
 
-    var maxFraction: CGFloat {
-        detents.map(\.fraction).max() ?? 0.0
-    }
-
-    var minFraction: CGFloat {
-        detents.map(\.fraction).min() ?? 1.0
-    }
-    
     func dragGestureOnChanged(_ gesture: DragGesture.Value) {
-        guard enableDragGesture else { return }
+        guard scrollDisabled else { return }
 
         let desiredHeight = sheetHeight - gesture.translation.height
 
-        let minHeight = minFraction * screenHeight
-        let maxHeight = maxFraction * screenHeight
+        let minHeight = (detents.map(\.fraction).min() ?? 1.0) * parentHeight
+        let maxHeight = (detents.map(\.fraction).max() ?? 0.0) * parentHeight
 
         // Clamp desired height within bounds
         let clampedDesiredHeight = max(minHeight, min(desiredHeight, maxHeight))
 
         self.sheetHeight = clampedDesiredHeight
     }
-    
+
     func dragGestureOnEnded(_ gesture: DragGesture.Value) {
         // Calculate the current fraction of the screen height
-        let currentFraction = sheetHeight / screenHeight
+        let currentFraction = sheetHeight / parentHeight
 
         // Find the closest detent based on the current fraction
         self.selectedDetent = detents.min(by: {
@@ -121,13 +118,9 @@ extension BottomSheetView {
         }) ?? .small
 
         // Calculate the desired height for the closest detent
-        let desiredHeight = screenHeight * selectedDetent.fraction
+        let desiredHeight = parentHeight * selectedDetent.fraction
 
         self.sheetHeight = desiredHeight
-
-        if selectedDetent == detents.max() {
-            enableDragGesture = false
-        }
     }
 
 }

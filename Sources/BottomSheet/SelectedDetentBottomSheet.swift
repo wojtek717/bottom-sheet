@@ -32,6 +32,8 @@ struct SelectedDetentBottomSheet<Content: View, SheetContent: View>: BottomSheet
     /// Binding to the currently selected detent, controlling the sheet's height.
     @Binding var selectedDetent: Detent
 
+    @State private var contentSize: CGSize = .zero
+
     /// The main content view that appears behind the bottom sheet.
     private let content: Content
     
@@ -57,17 +59,28 @@ struct SelectedDetentBottomSheet<Content: View, SheetContent: View>: BottomSheet
     }
     
     public var body: some View {
-        ZStack(alignment: .center) {
-            content.frame(maxWidth: .infinity)
-
-            if selectedDetent != .hidden {
-                BottomSheetView(
-                    configuration: $configuration,
-                    selectedDetent: $selectedDetent,
-                    content: sheetContent
-                )
+        content
+            .frame(
+                minWidth: 0,
+                maxWidth: .infinity,
+                minHeight: 0,
+                maxHeight: .infinity
+            )
+            .onGeometryChange(for: CGSize.self, of: {
+                $0.size
+            }, action: { newValue in
+                contentSize = newValue
+            })
+            .overlay(alignment: .bottom) {
+                if selectedDetent != .hidden {
+                    BottomSheetView(
+                        configuration: $configuration,
+                        selectedDetent: $selectedDetent,
+                        parentHeight: contentSize.height,
+                        content: sheetContent
+                    )
+                }
             }
-        }
     }
 }
 
