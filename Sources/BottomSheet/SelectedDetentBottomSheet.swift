@@ -32,6 +32,8 @@ struct SelectedDetentBottomSheet<Content: View, SheetContent: View>: BottomSheet
     /// Binding to the currently selected detent, controlling the sheet's height.
     @Binding var selectedDetent: Detent
 
+    @State private var contentSize: CGSize = .zero
+
     /// The main content view that appears behind the bottom sheet.
     private let content: Content
     
@@ -57,17 +59,28 @@ struct SelectedDetentBottomSheet<Content: View, SheetContent: View>: BottomSheet
     }
     
     public var body: some View {
-        ZStack(alignment: .center) {
-            content.frame(maxWidth: .infinity)
-
-            if selectedDetent != .hidden {
-                BottomSheetView(
-                    configuration: $configuration,
-                    selectedDetent: $selectedDetent,
-                    content: sheetContent
-                )
+        content
+            .frame(
+                minWidth: 0,
+                maxWidth: .infinity,
+                minHeight: 0,
+                maxHeight: .infinity
+            )
+            .onGeometryChange(for: CGSize.self, of: {
+                $0.size
+            }, action: { newValue in
+                contentSize = newValue
+            })
+            .overlay(alignment: .bottom) {
+                if selectedDetent != .hidden {
+                    BottomSheetView(
+                        configuration: $configuration,
+                        selectedDetent: $selectedDetent,
+                        parentHeight: contentSize.height,
+                        content: sheetContent
+                    )
+                }
             }
-        }
     }
 }
 
@@ -82,24 +95,29 @@ private struct ExampleView: View {
     var body: some View {
         TabView {
             Tab("Map", systemImage: "map") {
-                VStack {
-                    Text("isPresented: \(isPresented.description)")
-                    Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
-                        selectedDetent = if selectedDetent == .hidden {
-                            .small
-                        } else {
-                            .hidden
+                NavigationStack {
+                    VStack {
+                        Text("isPresented: \(isPresented.description)")
+                        Button(selectedDetent == .hidden ? "Show `BottomSheet`" : "Hide `BottomSheet`") {
+                            selectedDetent = if selectedDetent == .hidden {
+                                .small
+                            } else {
+                                .hidden
+                            }
                         }
                     }
+                    .navigationTitle("Map")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+                    .bottomSheet(selectedDetent: $selectedDetent) {
+                        RainbowList()
+                    }
+                    .dragIndicatorPresentation(isVisible: true)
+                    // We can prevent the user from swiping to dismiss by excluding `hidden` from
+                    // this list, while still supporting hiding it programmatically. Alternatively,
+                    // add `.hidden` to this list to allow users to swipe to dismiss.
+                    .detentsPresentation(detents: [.small, .medium, .large])
                 }
-                .bottomSheet(selectedDetent: $selectedDetent) {
-                    RainbowList()
-                }
-                .dragIndicatorPresentation(isVisible: true)
-                // We can prevent the user from swiping to dismiss by excluding `hidden` from
-                // this list, while still supporting hiding it programmatically. Alternatively,
-                // add `.hidden` to this list to allow users to swipe to dismiss.
-                .detentsPresentation(detents: [.small, .medium, .large])
             }
 
             Tab("Settings", systemImage: "gear") {

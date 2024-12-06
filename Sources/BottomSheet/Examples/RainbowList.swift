@@ -13,7 +13,7 @@ struct RainbowList: View {
 
     var body: some View {
         List {
-            ForEach((0..<colors.count * 4), id: \.self) { index in
+            ForEach((0..<colors.count * 10), id: \.self) { index in
                 let color = colors[index % colors.count]
                 Text(color.description)
                     .foregroundColor(.white)
@@ -24,4 +24,13 @@ struct RainbowList: View {
         .listStyle(.plain)
     }
 
+}
+
+#Preview {
+    RainbowList()
+        .onScrollGeometryChange(for: ScrollGeometry.self) { geometry in
+            geometry
+        } action: { _, geometry in
+            print(geometry)
+        }
 }
