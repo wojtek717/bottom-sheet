@@ -9,8 +9,8 @@ import SwiftUI
 
 struct BottomSheetView<Content: View>: View {
     @State private var sheetHeight: CGFloat = 0.0
-    @State private var scrollDisabled: Bool
-    @State private var scrollPosition = ScrollPosition()
+    @State private var isDragGestureEnabled: Bool = true
+    @State private var previousGesture: DragGesture.Value?
 
     @Binding private var configuration: BottomSheetViewConfiguration
     @Binding private var selectedDetent: Detent
@@ -35,67 +35,63 @@ struct BottomSheetView<Content: View>: View {
         self._selectedDetent = selectedDetent
         self.parentHeight = parentHeight
         self.content = content
-        self.scrollDisabled = selectedDetent.wrappedValue != configuration.detents.wrappedValue.max()
     }
     
     var body: some View {
-        content
-            .scrollPosition($scrollPosition)
-            .frame(height: sheetHeight)
-            .ignoresSafeArea(edges: configuration.ignoredEdges)
-            .overlay(alignment: .top, content: {
-                if configuration.dragIndicator.isPresented {
-                    Capsule()
-                        .frame(width: 50, height: 5)
-                        .foregroundStyle(configuration.dragIndicator.color)
-                        .padding(.top, 5)
-                }
-            })
-            .background(configuration.sheetColor)
-            .clipShape(
-                .rect(
-                    topLeadingRadius: configuration.cornerRadius,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: configuration.cornerRadius
-                )
-            )
-            .shadow(radius: 10)
-            .animation(.spring, value: sheetHeight)
-            // Ensures `DragGesture` works everywhere on sheet
-            .contentShape(.rect)
-            .scrollDisabled(scrollDisabled && selectedDetent != detents.max())
-            // It is important to update `BottomSheetView` as infrequently as possible
-            // in `action`
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentOffset.y <= 0
-            } action: { _, newValue in
-                scrollDisabled = newValue
+        ScrollViewWrapper(
+            isDragGestureEnabled: $isDragGestureEnabled,
+            selectedDetent: $selectedDetent,
+            detents: detents
+        ) {
+            content
+        }
+        .frame(height: sheetHeight)
+        .ignoresSafeArea(edges: configuration.ignoredEdges)
+        .overlay(alignment: .top, content: {
+            if configuration.dragIndicator.isPresented {
+                Capsule()
+                    .frame(width: 50, height: 5)
+                    .foregroundStyle(configuration.dragIndicator.color)
+                    .padding(.top, 5)
             }
-            // Always be listening to `DragGesture` to ensure for seemless
-            // sheet detent changes
-            .simultaneousGesture(
-                DragGesture()
-                    .onChanged({ value in
-                        dragGestureOnChanged(value)
-                    })
-                    .onEnded({ value in
-                        dragGestureOnEnded(value)
-                    })
+        })
+        .background(configuration.sheetColor)
+        .clipShape(
+            .rect(
+                topLeadingRadius: configuration.cornerRadius,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: configuration.cornerRadius
             )
-            .onChange(of: parentHeight, { _, parentHeight in
-                sheetHeight = selectedDetent.fraction * parentHeight
-            })
-            .onAppear {
-                sheetHeight = selectedDetent.fraction * parentHeight
-            }
+        )
+        .shadow(radius: 10)
+        .animation(.bouncy, value: sheetHeight)
+        // Ensures `DragGesture` works everywhere on sheet
+        .contentShape(.rect)
+        // Always be listening to `DragGesture` to ensure for seemless
+        // sheet detent changes
+        .simultaneousGesture(
+            DragGesture()
+                .onChanged({ value in
+                    dragGestureOnChanged(value)
+                })
+                .onEnded({ value in
+                    dragGestureOnEnded(value)
+                })
+        )
+        .onChange(of: parentHeight, { _, parentHeight in
+            sheetHeight = selectedDetent.fraction * parentHeight
+        })
+        .onAppear {
+            sheetHeight = selectedDetent.fraction * parentHeight
+        }
     }
 }
 
 extension BottomSheetView {
 
     func dragGestureOnChanged(_ gesture: DragGesture.Value) {
-        guard scrollDisabled else { return }
+        guard isDragGestureEnabled else { return }
 
         let desiredHeight = sheetHeight - gesture.translation.height
 

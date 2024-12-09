@@ -42,6 +42,5 @@ public extension BottomSheet {
     func dragIndicatorPresentation(isVisible: Bool, color: Color = .gray) -> some BottomSheet {
         self.configuration.dragIndicator = .init(isPresented: isVisible, color: color)
         return self
-    }
-
+    } 
 }
